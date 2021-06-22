@@ -9,8 +9,7 @@ class WC_Safetpay_Webhook_Handler {
 
   public $originalResponse = null;
 
-   //const COMMERCE = array('womynation'=> ' http://ricardob20.sg-host.com/?wc-api=wc_safetypay');
-   const COMMERCE = array('daysylatin'=> ' http://ricardob19.sg-host.com/?wc-api=wc_safetypay');
+   const COMMERCE = array('titlesite'=> 'DOMAIN/?wc-api=wc_safetypay');
 
 	/**
 	 * Constructor
@@ -49,7 +48,7 @@ class WC_Safetpay_Webhook_Handler {
               
               $this->process_webhook( $response );
             }else{
-              WC_Safetypay_Logger::log( 'apikey no es igual' );
+              WC_Safetypay_Logger::log( 'The api key is not equal' );
             }
             
         } else {
@@ -59,23 +58,31 @@ class WC_Safetpay_Webhook_Handler {
         }
 	}
 
+  /**
+	 * The method redirect is working how un router and check in which site the request must be processed
+	 */
+
   public function redirect( $response ){
     $data =  WC_Safetypay_Helper::get_order_id($response->MerchantSalesID);
 
     WC_Safetypay_Logger::log( 'CONFIG COMMERCE '. print_r( self::COMMERCE, true ), false  );
 
     if( isset(self::COMMERCE[$data['title']]) ){
-      WC_Safetypay_Logger::log( 'La respuesta no es para este sitio '.get_bloginfo().' ==> '. $data['title']  );
+      WC_Safetypay_Logger::log( 'The response is not for this site '.get_bloginfo().' ==> '. $data['title']  );
 
       $response = wp_remote_post( self::COMMERCE[$data['title']], array('method'  => 'POST','headers' => array(), 'body'    => $this->originalResponse) );
       WC_Safetypay_Logger::log( 'REQUEST RESPONSE: ' . print_r( $response, true ), false );
       return true;
     }else{
-      WC_Safetypay_Logger::log( 'La respuesta es para este sitio '.get_bloginfo().' ==> '. $data['title']  );
+      WC_Safetypay_Logger::log( 'The response is for this site '.get_bloginfo().' ==> '. $data['title']  );
       return false;
     }
   }
 
+
+  /**
+	 * Response for payment gateway 
+	 */
   public function csv($data){
     if($data->Status == WC_Safetypay_API::EVENT_TRANSACTION_UPDATED){
       $resp = WC_Safetypay_Helper::set_csv($data);
@@ -84,6 +91,9 @@ class WC_Safetpay_Webhook_Handler {
     }
   }
 
+  /**
+	 * Formats the response received by the payment gateway
+	 */
   public function format_data($response){
     $data = str_getcsv($response,"&","=");
 
